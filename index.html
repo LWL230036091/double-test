@@ -105,6 +105,7 @@
 <script>
     let totalRounds = 0;
     let finalBalance = 0;
+
     function simulateMartingale() {
         const initialBet = parseFloat(document.getElementById("initialBet").value);
         let balance = parseFloat(document.getElementById("startingBalance").value);
@@ -116,55 +117,68 @@
         const stopLoss = parseInt(document.getElementById("stopLoss").value, 10);
         let consecutiveLoss = 0;
         let maxBalance = balance;
+        const batchSize = 100; // 每批執行100局
 
-        while (balance > 0) {
-            round++;
-            const win = Math.random() < 0.5; // 50% 機率贏
-            output += `第 ${round} 局：投注 ${bet} 元，`;
+        function runBatch() {
+            let batchCount = 0;
+            while (balance > 0 && batchCount < batchSize) {
+                round++;
+                batchCount++;
+                const win = Math.random() < 0.5; // 50% 機率贏
+                output += `第 ${round} 局：投注 ${bet} 元，`;
 
-            if (win) {
-                balance += bet; // 贏了增加本金
-                output += `<div class=green>贏了！目前資金：${balance.toFixed(2)} 元</div>`;
-                bet = initialBet; // 重置投注金額
-                winCount++;
-                consecutiveLoss = 0; // 連輸歸零
-            } else {
-                balance -= bet; // 輸了扣掉投注金額
-                output += `<div class=red>輸了... 目前資金：${balance.toFixed(2)} 元</div>`;
-                bet *= 2; // 加倍投注金額
-                loseCount++;
-                consecutiveLoss++;
+                if (win) {
+                    balance += bet; // 贏了增加本金
+                    output += `<div class=green>贏了！目前資金：${balance.toFixed(2)} 元</div>`;
+                    bet = initialBet; // 重置投注金額
+                    winCount++;
+                    consecutiveLoss = 0; // 連輸歸零
+                } else {
+                    balance -= bet; // 輸了扣掉投注金額
+                    output += `<div class=red>輸了... 目前資金：${balance.toFixed(2)} 元</div>`;
+                    bet *= 2; // 加倍投注金額
+                    loseCount++;
+                    consecutiveLoss++;
 
-                if (consecutiveLoss >= stopLoss) {
-                    output += `<div class=red>連輸 ${stopLoss} 次，止lose重來！</div>`;
-                    bet = initialBet;
-                    consecutiveLoss = 0;
+                    if (consecutiveLoss >= stopLoss) {
+                        output += `<div class=red>連輸 ${stopLoss} 次，止lose重來！</div>`;
+                        bet = initialBet;
+                        consecutiveLoss = 0;
+                    }
+
+                    if (balance < bet) {
+                        output += "<div>資金不足，無法再加倍！模擬結束。</div>";
+                        break;
+                    }
                 }
 
-                if (balance < bet) {
-                    output += "<div>資金不足，無法再加倍！模擬結束。</div>";
+                if (balance > maxBalance) {
+                    maxBalance = balance;
+                }
+
+                if (balance <= 0) {
+                    output += "<div>破產！模擬結束。</div>";
                     break;
                 }
             }
 
-            if (balance > maxBalance) {
-                maxBalance = balance;
-            }
+            document.getElementById("output").innerHTML = output;
+            document.getElementById("output").scrollTop = document.getElementById("output").scrollHeight;
 
-            if (balance <= 0) {
-                output += "<div>破產！模擬結束。</div>";
-                break;
+            // 如果還沒結束，排程下一批
+            if (balance > 0 && balance >= bet) {
+                setTimeout(runBatch, 0);
+            } else {
+                output += `<div>共進行 ${round} 局，贏了 ${winCount} 局，輸了 ${loseCount} 局。</div>`;
+                output += `<div>單次模擬最高資金：${maxBalance.toFixed(2)} 元</div>`;
+                totalRounds++;
+                finalBalance += balance;
+                document.getElementById("output").innerHTML = output;
+                document.getElementById("output").scrollTop = document.getElementById("output").scrollHeight;
             }
         }
 
-        output += `<div>共進行 ${round} 局，贏了 ${winCount} 局，輸了 ${loseCount} 局。</div>`;
-        output += `<div>單次模擬最高資金：${maxBalance.toFixed(2)} 元</div>`;
-        totalRounds++;
-        finalBalance += balance;
-
-        document.getElementById("output").innerHTML = output;
-        // scroll to bottom
-        document.getElementById("output").scrollTop = document.getElementById("output").scrollHeight;
+        runBatch();
     }
 
     const start = () => {

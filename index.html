@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <title>馬丁格爾模擬器</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f8f8f8;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 40px auto;
+            background: #fff;
+            padding: 24px 32px 32px 32px;
+            border-radius: 10px;
+            box-shadow: 0 2px 12px #0001;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        label {
+            display: block;
+            margin-top: 16px;
+            color: #444;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            margin-top: 4px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            margin-top: 24px;
+            width: 100%;
+            padding: 12px;
+            background: #4caf50;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 1.1em;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #388e3c;
+        }
+
+        #output {
+            margin-top: 24px;
+            background: #222;
+            color: #fff;
+            padding: 16px;
+            border-radius: 6px;
+            height: 260px;
+            overflow-y: auto;
+            font-size: 1em;
+        }
+
+        .green {
+            color: #7CFC00;
+            font-weight: bold;
+        }
+
+        .red {
+            color: #FF6347;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Double 大法test</h1>
+        <label for="initialBet">初始投注金額：</label>
+        <input type="number" id="initialBet" value="10" min="1" step="1">
+        <label for="startingBalance">起始資金：</label>
+        <input type="number" id="startingBalance" value="1000" min="1" step="1">
+        <label for="stopLoss">止lose連輸次數：</label>
+        <input type="number" id="stopLoss" value="5" min="1" step="1">
+        <button onclick="start()">開始模擬</button>
+        <div id="output">請輸入參數並點擊「開始模擬」</div>
+    </div>
+</body>
+
+</html>
+
+
+
+
+
+
+
+
+<script>
+    let totalRounds = 0;
+    let finalBalance = 0;
+    function simulateMartingale() {
+        const initialBet = parseFloat(document.getElementById("initialBet").value);
+        let balance = parseFloat(document.getElementById("startingBalance").value);
+        let bet = initialBet;
+        let round = 0;
+        let output = "模擬結果：\n";
+        let winCount = 0;
+        let loseCount = 0;
+        const stopLoss = parseInt(document.getElementById("stopLoss").value, 10);
+        let consecutiveLoss = 0;
+        let maxBalance = balance;
+
+        while (balance > 0) {
+            round++;
+            const win = Math.random() < 0.5; // 50% 機率贏
+            output += `第 ${round} 局：投注 ${bet} 元，`;
+
+            if (win) {
+                balance += bet; // 贏了增加本金
+                output += `<div class=green>贏了！目前資金：${balance.toFixed(2)} 元</div>`;
+                bet = initialBet; // 重置投注金額
+                winCount++;
+                consecutiveLoss = 0; // 連輸歸零
+            } else {
+                balance -= bet; // 輸了扣掉投注金額
+                output += `<div class=red>輸了... 目前資金：${balance.toFixed(2)} 元</div>`;
+                bet *= 2; // 加倍投注金額
+                loseCount++;
+                consecutiveLoss++;
+
+                if (consecutiveLoss >= stopLoss) {
+                    output += `<div class=red>連輸 ${stopLoss} 次，止lose重來！</div>`;
+                    bet = initialBet;
+                    consecutiveLoss = 0;
+                }
+
+                if (balance < bet) {
+                    output += "<div>資金不足，無法再加倍！模擬結束。</div>";
+                    break;
+                }
+            }
+
+            if (balance > maxBalance) {
+                maxBalance = balance;
+            }
+
+            if (balance <= 0) {
+                output += "<div>破產！模擬結束。</div>";
+                break;
+            }
+        }
+
+        output += `<div>共進行 ${round} 局，贏了 ${winCount} 局，輸了 ${loseCount} 局。</div>`;
+        output += `<div>單次模擬最高資金：${maxBalance.toFixed(2)} 元</div>`;
+        totalRounds++;
+        finalBalance += balance;
+
+        document.getElementById("output").innerHTML = output;
+        // scroll to bottom
+        document.getElementById("output").scrollTop = document.getElementById("output").scrollHeight;
+    }
+
+    const start = () => {
+        // for (let i = 0; i < document.getElementById("times").value; i++) {
+            simulateMartingale();
+        // }
+    };
+
+</script>

@@ -116,8 +116,9 @@
         const stopLoss = parseInt(document.getElementById("stopLoss").value, 10);
         let consecutiveLoss = 0;
         let maxBalance = balance;
+        const maxRounds = 80000; // 最多執行80000局
 
-        while (balance > 0) {
+        while (balance > 0 && round < maxRounds) {
             round++;
             const win = Math.random() < 0.5; // 50% 機率贏
             output += `第 ${round} 局：投注 ${bet} 元，`;
@@ -155,6 +156,9 @@
                 output += "<div>破產！模擬結束。</div>";
                 break;
             }
+        }
+        if (round >= maxRounds) {
+            output += `<div>已達最大模擬局數 ${maxRounds}，自動結束。</div>`;
         }
 
         output += `<div>共進行 ${round} 局，贏了 ${winCount} 局，輸了 ${loseCount} 局。</div>`;
